@@ -1,12 +1,14 @@
 package www.faehse.de.todo;
 
 import android.content.Context;
+import android.content.Intent;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.location.LocationProvider;
 import android.os.AsyncTask;
+import android.provider.Settings;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -51,7 +53,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     float RADIUS = 1500;
     // Parameter für den Location-Update Aufruf
     int TIME = 1000;
-    int UMKREIS = 20;
+    int UMKREIS = 5;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,6 +78,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             Log.d(TAG, "requiresCell(): " + lp.requiresCell());
             Log.d(TAG, "requiresNetwork(): " + lp.requiresNetwork());
             Log.d(TAG, "requiresSatellite(): " + lp.requiresSatellite());
+        }
+        boolean enabled = manager
+                .isProviderEnabled(LocationManager.GPS_PROVIDER);
+        if (!enabled) {
+            Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+            startActivity(intent);
         }
         // Provider mit grober Auflösung
         // und niedrigen Energieverbrauch
@@ -125,7 +133,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             .radius(RADIUS)
                             .fillColor(0x5500ff00)
                             .strokeWidth(0.0f));
-                    new PoiErfragen().execute();
+                    new RequestPOI().execute();
                     zaehler++;
 
                 }
@@ -158,6 +166,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
         // Deaktiviren der Google Buttons für GoogleMaps und Google Routing Funktionen
         mMap.getUiSettings().setMapToolbarEnabled(true);
+        mMap.setMyLocationEnabled(true);
+        mMap.setTrafficEnabled(true);
 
     }
 
@@ -195,7 +205,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     }
 
-    private class PoiErfragen extends AsyncTask<Void, Void, String> {
+    private class RequestPOI extends AsyncTask<Void, Void, String> {
 
         private static final String LOG_TAG = "TestApp";
         HttpURLConnection connection = null;
